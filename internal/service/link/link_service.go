@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	model "github.com/mcandemir/bilinkat/internal/model/link"
@@ -15,6 +16,7 @@ func NewLinkService() *LinkService {
 
 func (s *LinkService) Shorten(url string) (model.Link, error) {
 	slug := utils.GenerateSlug(7)
+	fmt.Println("Generated Slug")
 
 	link := model.Link{
 		Slug:      slug,

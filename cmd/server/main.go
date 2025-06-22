@@ -3,19 +3,16 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	handler "github.com/mcandemir/bilinkat/internal/handler/link"
+	router "github.com/mcandemir/bilinkat/internal/router"
 )
 
 func main() {
-	r := chi.NewRouter()
-	linkHandler := handler.NewLinkHandler()
+	handlers := &router.Handlers{
+		Link: handler.NewLinkHandler(),
+	}
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Bİ LİNK AT!"))
-	})
+	router := router.NewRouter(*handlers)
 
-	r.Get("/shorten", linkHandler.ShortenHandler)
-
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":3000", router)
 }
