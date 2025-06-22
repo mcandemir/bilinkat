@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	"github.com/mcandemir/bilinkat/internal/model"
+	model "github.com/mcandemir/bilinkat/internal/model/link"
 	"github.com/mcandemir/bilinkat/internal/utils"
 )
 

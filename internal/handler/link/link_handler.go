@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/mcandemir/bilinkat/internal/service"
+	service "github.com/mcandemir/bilinkat/internal/service/link"
 )
 
 type LinkHandler struct {

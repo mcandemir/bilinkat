@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mcandemir/bilinkat/internal/handler"
+	handler "github.com/mcandemir/bilinkat/internal/handler/link"
 )
 
 func main() {
