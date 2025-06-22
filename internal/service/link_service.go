@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/mcandemir/bilinkat/internal/model"
+	"github.com/mcandemir/bilinkat/internal/utils"
 )
 
 type LinkService struct{}
@@ -13,7 +14,7 @@ func NewLinkService() *LinkService {
 }
 
 func (s *LinkService) Shorten(url string) (model.Link, error) {
-	slug := "testSlug"
+	slug := utils.GenerateSlug(7)
 
 	link := model.Link{
 		Slug:      slug,
