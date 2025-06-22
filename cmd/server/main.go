@@ -15,7 +15,7 @@ func main() {
 		w.Write([]byte("Bİ LİNK AT!"))
 	})
 
-	r.Get("/shorten", linkHandler.TestHandler)
+	r.Get("/shorten", linkHandler.ShortenHandler)
 
 	http.ListenAndServe(":3000", r)
 }

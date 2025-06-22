@@ -14,7 +14,7 @@ func NewLinkHandler() *LinkHandler {
 	return &LinkHandler{}
 }
 
-func (h *LinkHandler) TestHandler(w http.ResponseWriter, r *http.Request) {
+func (h *LinkHandler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	slug, err := h.service.Shorten(r.URL.Path)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
