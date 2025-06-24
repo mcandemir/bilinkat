@@ -2,6 +2,7 @@ package linkhandler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -81,37 +82,36 @@ func (h *LinkHandler) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	h.sendJSON(w, links, http.StatusOK)
 }
 
-// GetLink handles GET /api/v1/links/{id}
+// GetLink handles GET /api/v1/links/{slug}
 func (h *LinkHandler) GetLink(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		h.sendError(w, "Link ID is required", http.StatusBadRequest)
+	slug := chi.URLParam(r, "slug")
+	if slug == "" {
+		h.sendError(w, "Link slug is required", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.Atoi(idStr)
+	link, err := h.service.GetLink(slug)
+
 	if err != nil {
-		h.sendError(w, "Invalid link ID", http.StatusBadRequest)
-		return
+		// handle error
+		log.Default().Println("something wrong with get link")
 	}
 
-	// TODO: Add method to get link by ID in service
-	// For now, just use the id to avoid unused variable error
-	_ = id
-	h.sendError(w, "Link not found", http.StatusNotFound)
+	// For now, just use the slug to avoid unused variable error
+	h.sendJSON(w, link, 200)
 }
 
-// UpdateLink handles PUT /api/v1/links/{id}
+// UpdateLink handles PUT /api/v1/links/{slug}
 func (h *LinkHandler) UpdateLink(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
+	idStr := chi.URLParam(r, "slug")
 	if idStr == "" {
-		h.sendError(w, "Link ID is required", http.StatusBadRequest)
+		h.sendError(w, "Link slug is required", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.sendError(w, "Invalid link ID", http.StatusBadRequest)
+		h.sendError(w, "Invalid link slug", http.StatusBadRequest)
 		return
 	}
 
