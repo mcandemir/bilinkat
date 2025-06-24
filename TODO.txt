@@ -1,0 +1,11 @@
+ Wednesday, June 25, 2025 
+ - fix linkHandler.UpdateLink
+ - fix linkHandler.DeleteLink
+ - fix other misinterpretations
+ - check api routes, make sure they are connected to their services
+ - make sure services all fixed and ready to return demo
+ - check logging middleware
+ - check other middlewares
+ - check request/response models
+ - complete missing request/models 
+
