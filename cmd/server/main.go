@@ -3,16 +3,21 @@ package main
 import (
 	"net/http"
 
-	handler "github.com/mcandemir/bilinkat/internal/handler/link"
+	linkhandler "github.com/mcandemir/bilinkat/internal/handler/link"
 	router "github.com/mcandemir/bilinkat/internal/router"
+	linkservice "github.com/mcandemir/bilinkat/internal/service/link"
 )
 
 func main() {
+	// Initialize service layer
+	linkService := linkservice.NewLinkService()
+
+	// Initialize handler with service dependency
 	handlers := &router.Handlers{
-		Link: handler.NewLinkHandler(),
+		Link: linkhandler.NewLinkHandler(linkService),
 	}
 
-	router := router.NewRouter(*handlers)
+	router := router.NewRouter(handlers)
 
 	http.ListenAndServe(":3000", router)
 }
