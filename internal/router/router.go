@@ -51,9 +51,9 @@ func (r *Router) setupLinkRoutes(v1 chi.Router) {
 	v1.Route("/links", func(links chi.Router) {
 		links.Post("/shorten", r.handlers.Link.Shorten)
 		links.Get("/", r.handlers.Link.GetUserLinks)
-		links.Get("/{id}", r.handlers.Link.GetLink)
-		links.Put("/{id}", r.handlers.Link.UpdateLink)
-		links.Delete("/{id}", r.handlers.Link.DeleteLink)
+		links.Get("/{slug}", r.handlers.Link.GetLink)
+		links.Put("/{slug}", r.handlers.Link.UpdateLink)
+		links.Delete("/{slug}", r.handlers.Link.DeleteLink)
 	})
 }
 
