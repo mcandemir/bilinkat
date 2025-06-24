@@ -11,6 +11,7 @@ A URL shortening service built with Go.
 - ✅ JSON responses
 - ✅ Middleware support
 - ✅ Service layer architecture
+- ✅ Clean package naming
 
 ## Project Structure
 
