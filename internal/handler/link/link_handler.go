@@ -2,19 +2,20 @@ package linkhandler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	errors "github.com/mcandemir/bilinkat/internal/errors"
 	linkmodel "github.com/mcandemir/bilinkat/internal/model/link"
 	linkservice "github.com/mcandemir/bilinkat/internal/service/link"
 )
 
+// LinkHandler definition with LinkService dependency injection
 type LinkHandler struct {
 	service *linkservice.LinkService
 }
 
+// Create a new linkhandler with the given service, inject it
 func NewLinkHandler(linkService *linkservice.LinkService) *LinkHandler {
 	return &LinkHandler{
 		service: linkService,
@@ -25,42 +26,32 @@ func NewLinkHandler(linkService *linkservice.LinkService) *LinkHandler {
 func (h *LinkHandler) Shorten(w http.ResponseWriter, r *http.Request) {
 	var req linkmodel.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.sendError(w, "Invalid request body", http.StatusBadRequest)
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid request body", nil, getRequestID(r))
 		return
 	}
 
 	// Use service to shorten URL
 	link, err := h.service.Shorten(req.URL)
 	if err != nil {
-		h.sendError(w, err.Error(), http.StatusBadRequest)
+		errors.WriteValidationError(w, err.Code, "Invalid URL", nil, getRequestID(r))
 		return
 	}
 
-	// Build response
-	baseURL := "http://localhost:3000"
-	shortURL := baseURL + "/" + link.Slug
-
-	response := linkmodel.ShortenResponse{
-		ShortURL:    shortURL,
-		OriginalURL: link.Url,
-		Slug:        link.Slug,
-	}
-
-	h.sendJSON(w, response, http.StatusCreated)
+	h.sendJSON(w, link, http.StatusCreated)
 }
 
 // Redirect handles GET /{slug} - redirects to original URL
 func (h *LinkHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	if slug == "" {
-		h.sendError(w, "Slug is required", http.StatusBadRequest)
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid slug", nil, getRequestID(r))
 		return
 	}
 
 	// Use service to get link
 	link, err := h.service.GetLink(slug)
 	if err != nil {
-		h.sendError(w, "Link not found", http.StatusNotFound)
+		errors.WriteNotFoundError(w, err.Code, err.Message, getRequestID(r))
 		return
 	}
 
@@ -75,7 +66,7 @@ func (h *LinkHandler) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 
 	links, err := h.service.GetUserLinks(userID)
 	if err != nil {
-		h.sendError(w, "Failed to get links", http.StatusInternalServerError)
+		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
 	}
 
@@ -86,7 +77,7 @@ func (h *LinkHandler) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 func (h *LinkHandler) GetLink(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	if slug == "" {
-		h.sendError(w, "Link slug is required", http.StatusBadRequest)
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid slug", nil, getRequestID(r))
 		return
 	}
 
@@ -94,59 +85,50 @@ func (h *LinkHandler) GetLink(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// handle error
-		log.Default().Println("something wrong with get link")
+		errors.WriteErrorResponse(w, err, getRequestID(r))
+		return
 	}
 
 	// For now, just use the slug to avoid unused variable error
-	h.sendJSON(w, link, 200)
+	h.sendJSON(w, link, http.StatusOK)
 }
 
 // UpdateLink handles PUT /api/v1/links/{slug}
 func (h *LinkHandler) UpdateLink(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "slug")
-	if idStr == "" {
-		h.sendError(w, "Link slug is required", http.StatusBadRequest)
+	var req linkmodel.UpdateLinkRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid request body", nil, getRequestID(r))
 		return
 	}
 
-	id, err := strconv.Atoi(idStr)
+	slug := chi.URLParam(r, "slug")
+	if slug == "" {
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid slug", nil, getRequestID(r))
+		return
+	}
+
+	// update service
+
+	link, err := h.service.UpdateLink(slug, &req)
 	if err != nil {
-		h.sendError(w, "Invalid link slug", http.StatusBadRequest)
-		return
-	}
-
-	var updates map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		h.sendError(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	link, err := h.service.UpdateLink(id, updates)
-	if err != nil {
-		h.sendError(w, err.Error(), http.StatusNotFound)
+		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
 	}
 
 	h.sendJSON(w, link, http.StatusOK)
 }
 
-// DeleteLink handles DELETE /api/v1/links/{id}
+// DeleteLink handles DELETE /api/v1/links/{slug}
 func (h *LinkHandler) DeleteLink(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		h.sendError(w, "Link ID is required", http.StatusBadRequest)
+	slug := chi.URLParam(r, "slug")
+	if slug == "" {
+		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid slug", nil, getRequestID(r))
 		return
 	}
 
-	id, err := strconv.Atoi(idStr)
+	err := h.service.DeleteLink(slug)
 	if err != nil {
-		h.sendError(w, "Invalid link ID", http.StatusBadRequest)
-		return
-	}
-
-	err = h.service.DeleteLink(id)
-	if err != nil {
-		h.sendError(w, err.Error(), http.StatusInternalServerError)
+		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
 	}
 
@@ -160,10 +142,7 @@ func (h *LinkHandler) sendJSON(w http.ResponseWriter, data interface{}, statusCo
 	json.NewEncoder(w).Encode(data)
 }
 
-func (h *LinkHandler) sendError(w http.ResponseWriter, message string, statusCode int) {
-	response := linkmodel.ErrorResponse{
-		Error:   http.StatusText(statusCode),
-		Message: message,
-	}
-	h.sendJSON(w, response, statusCode)
+func getRequestID(r *http.Request) string {
+	return "123123"
+	//return r.Header.Get("X-Request-ID")
 }

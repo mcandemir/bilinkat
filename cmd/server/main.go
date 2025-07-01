@@ -1,23 +1,31 @@
 package main
 
 import (
-	"net/http"
+	"log"
 
+	config "github.com/mcandemir/bilinkat/internal/config"
 	linkhandler "github.com/mcandemir/bilinkat/internal/handler/link"
 	router "github.com/mcandemir/bilinkat/internal/router"
 	linkservice "github.com/mcandemir/bilinkat/internal/service/link"
 )
 
 func main() {
+	// load env
+	cfg := config.MustLoad()
+
 	// Initialize service layer
-	linkService := linkservice.NewLinkService()
+	linkService := linkservice.NewLinkService(cfg)
 
 	// Initialize handler with service dependency
 	handlers := &router.Handlers{
 		Link: linkhandler.NewLinkHandler(linkService),
 	}
 
-	router := router.NewRouter(handlers)
+	// create routers with handlers dependency
+	r := router.NewRouter(handlers)
 
-	http.ListenAndServe(":3000", router)
+	server := NewServer(cfg, r)
+	if err := server.Start(); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

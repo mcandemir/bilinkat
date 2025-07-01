@@ -1,32 +1,35 @@
 package linkservice
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/mcandemir/bilinkat/internal/config"
+	errors "github.com/mcandemir/bilinkat/internal/errors"
 	linkmodel "github.com/mcandemir/bilinkat/internal/model/link"
-	"github.com/mcandemir/bilinkat/internal/utils"
+	utils "github.com/mcandemir/bilinkat/internal/utils"
+	linkvalidator "github.com/mcandemir/bilinkat/internal/validator/link"
 )
 
-type LinkService struct{}
+type LinkService struct {
+	config *config.Config
+}
 
-func NewLinkService() *LinkService {
-	return &LinkService{}
+func NewLinkService(cfg *config.Config) *LinkService {
+	return &LinkService{config: cfg}
 }
 
 // Shorten creates a shortened URL for the given long URL
-func (s *LinkService) Shorten(url string) (*linkmodel.Link, error) {
+func (s *LinkService) Shorten(url string) (*linkmodel.Link, *errors.AppError) {
 	// Validate URL
-	if err := s.validateURL(url); err != nil {
+	if err := linkvalidator.NewLinkValidator().ValidateURL(url); err != nil {
 		return nil, err
 	}
 
 	// Generate unique slug
 	slug, err := s.generateUniqueSlug()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate slug: %w", err)
+		return nil, err
 	}
 
 	// Create link
@@ -44,59 +47,54 @@ func (s *LinkService) Shorten(url string) (*linkmodel.Link, error) {
 }
 
 // GetLink retrieves a link by its slug
-func (s *LinkService) GetLink(slug string) (*linkmodel.Link, error) {
-	if slug == "" {
-		return nil, errors.New("slug cannot be empty")
+func (s *LinkService) GetLink(slug string) (*linkmodel.Link, *errors.AppError) {
+	err := linkvalidator.NewLinkValidator().ValidateSlug(slug)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO: Get from database via repository
 	// For now, return a mock link
-	link := &linkmodel.Link{
-		Id:        1,
-		Slug:      slug,
-		Url:       "https://mehmetcandemir.com",
-		CreatedAt: time.Now(),
-	}
+	link := linkmodel.CreateExampleLink(slug)
 
 	return link, nil
 }
 
 // GetUserLinks retrieves all links for a user
-func (s *LinkService) GetUserLinks(userID int) ([]*linkmodel.Link, error) {
+func (s *LinkService) GetUserLinks(userID int) ([]*linkmodel.Link, *errors.AppError) {
 	// TODO: Get from database via repository
 	// For now, return empty list
-	return []*linkmodel.Link{}, nil
+	links := []*linkmodel.Link{}
+	links = append(links, linkmodel.CreateExampleLink("123456"))
+	links = append(links, linkmodel.CreateExampleLink("123457"))
+	links = append(links, linkmodel.CreateExampleLink("123458"))
+	links = append(links, linkmodel.CreateExampleLink("123459"))
+	links = append(links, linkmodel.CreateExampleLink("123460"))
+	return links, nil
 }
 
 // UpdateLink updates an existing link
-func (s *LinkService) UpdateLink(id int, updates map[string]interface{}) (*linkmodel.Link, error) {
-	// TODO: Update in database via repository
-	// For now, return error
-	return nil, errors.New("link not found")
+func (s *LinkService) UpdateLink(slug string, updateLinkModel *linkmodel.UpdateLinkRequest) (*linkmodel.Link, *errors.AppError) {
+	// validate request context
+	if err := linkvalidator.NewLinkValidator().ValidateURL(updateLinkModel.URL); err != nil {
+		return nil, err
+	}
+
+	// if valid, conduct the updating process
+	link := linkmodel.CreateExampleLink(slug)
+
+	return link, nil
 }
 
 // DeleteLink deletes a link
-func (s *LinkService) DeleteLink(id int) error {
+func (s *LinkService) DeleteLink(slug string) *errors.AppError {
 	// TODO: Delete from database via repository
 	// For now, return success
 	return nil
 }
 
-// validateURL checks if the URL is valid
-func (s *LinkService) validateURL(url string) error {
-	if url == "" {
-		return errors.New("URL cannot be empty")
-	}
-
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		return errors.New("URL must start with http:// or https://")
-	}
-
-	return nil
-}
-
 // generateUniqueSlug creates a unique slug
-func (s *LinkService) generateUniqueSlug() (string, error) {
+func (s *LinkService) generateUniqueSlug() (string, *errors.AppError) {
 	const maxAttempts = 10
 	const slugLength = 6
 
@@ -108,5 +106,5 @@ func (s *LinkService) generateUniqueSlug() (string, error) {
 		return slug, nil
 	}
 
-	return "", errors.New("failed to generate unique slug after maximum attempts")
+	return "", errors.NewInternalError("failed to generate unique slug after maximum attempts", errors.CodeExternalServiceError, nil)
 }

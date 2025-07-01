@@ -9,6 +9,15 @@ type Link struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+func CreateExampleLink(slug string) *Link {
+	return &Link{
+		Id:        1,
+		Slug:      slug,
+		Url:       "https://mehmetcandemir.com",
+		CreatedAt: time.Now(),
+	}
+}
+
 type ShortenRequest struct {
 	URL string `json:"url"`
 }
@@ -19,7 +28,12 @@ type ShortenResponse struct {
 	Slug        string `json:"slug"`
 }
 
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
+type UpdateLinkRequest struct {
+	URL string `json:"url"`
+}
+
+type UpdateLinkResponse struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+	Slug        string `json:"slug"`
 }
