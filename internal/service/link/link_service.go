@@ -1,11 +1,11 @@
 package linkservice
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/mcandemir/bilinkat/internal/config"
 	errors "github.com/mcandemir/bilinkat/internal/errors"
+	logger "github.com/mcandemir/bilinkat/internal/logger"
 	linkmodel "github.com/mcandemir/bilinkat/internal/model/link"
 	utils "github.com/mcandemir/bilinkat/internal/utils"
 	linkvalidator "github.com/mcandemir/bilinkat/internal/validator/link"
@@ -13,10 +13,14 @@ import (
 
 type LinkService struct {
 	config *config.Config
+	logger *logger.Logger
 }
 
-func NewLinkService(cfg *config.Config) *LinkService {
-	return &LinkService{config: cfg}
+func NewLinkService(cfg *config.Config, logger *logger.Logger) *LinkService {
+	return &LinkService{
+		config: cfg,
+		logger: logger,
+	}
 }
 
 // Shorten creates a shortened URL for the given long URL
@@ -41,7 +45,6 @@ func (s *LinkService) Shorten(url string) (*linkmodel.Link, *errors.AppError) {
 
 	// TODO: Save to database via repository
 	// For now, just return the link
-	fmt.Printf("Created link: %s -> %s\n", slug, url)
 
 	return link, nil
 }

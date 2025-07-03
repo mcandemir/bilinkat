@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	errors "github.com/mcandemir/bilinkat/internal/errors"
+	logger "github.com/mcandemir/bilinkat/internal/logger"
 	linkmodel "github.com/mcandemir/bilinkat/internal/model/link"
 	linkservice "github.com/mcandemir/bilinkat/internal/service/link"
 )
@@ -13,12 +14,14 @@ import (
 // LinkHandler definition with LinkService dependency injection
 type LinkHandler struct {
 	service *linkservice.LinkService
+	logger  *logger.Logger
 }
 
 // Create a new linkhandler with the given service, inject it
-func NewLinkHandler(linkService *linkservice.LinkService) *LinkHandler {
+func NewLinkHandler(linkService *linkservice.LinkService, logger *logger.Logger) *LinkHandler {
 	return &LinkHandler{
 		service: linkService,
+		logger:  logger,
 	}
 }
 

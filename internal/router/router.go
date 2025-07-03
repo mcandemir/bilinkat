@@ -4,8 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
 	linkhandler "github.com/mcandemir/bilinkat/internal/handler/link"
-	"github.com/mcandemir/bilinkat/internal/middleware"
+	logger "github.com/mcandemir/bilinkat/internal/logger"
+	middleware "github.com/mcandemir/bilinkat/internal/middleware"
 )
 
 type Handlers struct {
@@ -15,12 +17,14 @@ type Handlers struct {
 type Router struct {
 	chi.Router
 	handlers *Handlers
+	logger   *logger.Logger
 }
 
-func NewRouter(handlers *Handlers) *Router {
+func NewRouter(handlers *Handlers, logger *logger.Logger) *Router {
 	router := &Router{
 		Router:   chi.NewRouter(),
 		handlers: handlers,
+		logger:   logger,
 	}
 
 	router.setupMiddleware()
@@ -31,8 +35,8 @@ func NewRouter(handlers *Handlers) *Router {
 
 func (r *Router) setupMiddleware() {
 	// Global middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(middleware.Logger(r.logger))
+	r.Use(middleware.Recoverer(r.logger))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 }

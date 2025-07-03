@@ -1,39 +1,49 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"time"
+
+	logger "github.com/mcandemir/bilinkat/internal/logger"
 )
 
-func Logger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		duration := time.Since(start)
+func Logger(logger *logger.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			duration := time.Since(start)
 
-		log.Printf(
-			"%s %s %v %s %s",
-			r.Method,
-			r.URL.Path,
-			duration,
-			r.RemoteAddr,
-			r.UserAgent(),
-		)
-	})
+			logger.Info(
+				r.Context(),
+				"HTTP request completed",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"duration_ms", duration.Milliseconds(),
+				"remote_addr", r.RemoteAddr,
+				"user_agent", r.UserAgent(),
+			)
+		})
+	}
 }
 
-func Recoverer(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("Panic: %v", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
-		}()
+func Recoverer(logger *logger.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					logger.Error(
+						r.Context(),
+						"Panic",
+						"err", err,
+					)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+			}()
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func RequestID(next http.Handler) http.Handler {
