@@ -23,6 +23,7 @@ type AppConfig struct {
 	Environment string `envconfig:"APP_ENV" default:"development"`
 	LogLevel    string `envconfig:"APP_LOG_LEVEL" default:"info"`
 	LogFormat   string `envconfig:"APP_LOG_FORMAT" default:"json"` // json or text
+	XAPIKey     string `envconfig:"X_API_KEY" required:"true"`
 }
 
 // DatabaseConfig holds database-related configuration

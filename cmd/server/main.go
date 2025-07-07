@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// create routers with handlers dependency
-	r := router.NewRouter(handlers, logger)
+	r := router.NewRouter(handlers, logger, cfg)
 
 	server := NewServer(cfg, r)
 	if err := server.Start(); err != nil {
