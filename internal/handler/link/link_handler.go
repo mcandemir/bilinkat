@@ -49,10 +49,6 @@ func (h *LinkHandler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Info(ctx, "URL shortened successfully",
-		"original_url", req.URL,
-		"slug", link.Slug)
-
 	h.sendJSON(w, link, http.StatusCreated)
 }
 
