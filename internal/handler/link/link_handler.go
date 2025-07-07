@@ -27,18 +27,31 @@ func NewLinkHandler(linkService *linkservice.LinkService, logger *logger.Logger)
 
 // Shorten handles POST /api/v1/links/shorten
 func (h *LinkHandler) Shorten(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var req linkmodel.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error(ctx, "Failed to decode request body", "error", err.Error())
 		errors.WriteValidationError(w, errors.CodeInvalidInput, "Invalid request body", nil, getRequestID(r))
 		return
 	}
 
+	h.logger.Debug(ctx, "Processing shorten request", "url", req.URL)
+
 	// Use service to shorten URL
-	link, err := h.service.Shorten(req.URL)
+	link, err := h.service.Shorten(ctx, req.URL)
 	if err != nil {
+		h.logger.Error(ctx, "Service error during URL shortening",
+			"url", req.URL,
+			"error_code", err.Code,
+			"error_message", err.Message)
 		errors.WriteValidationError(w, err.Code, "Invalid URL", nil, getRequestID(r))
 		return
 	}
+
+	h.logger.Info(ctx, "URL shortened successfully",
+		"original_url", req.URL,
+		"slug", link.Slug)
 
 	h.sendJSON(w, link, http.StatusCreated)
 }
@@ -52,7 +65,7 @@ func (h *LinkHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Use service to get link
-	link, err := h.service.GetLink(slug)
+	link, err := h.service.GetLink(r.Context(), slug)
 	if err != nil {
 		errors.WriteNotFoundError(w, err.Code, err.Message, getRequestID(r))
 		return
@@ -67,7 +80,7 @@ func (h *LinkHandler) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	// For now, use user ID 1 (we'll add authentication later)
 	userID := 1
 
-	links, err := h.service.GetUserLinks(userID)
+	links, err := h.service.GetUserLinks(r.Context(), userID)
 	if err != nil {
 		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
@@ -84,7 +97,7 @@ func (h *LinkHandler) GetLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := h.service.GetLink(slug)
+	link, err := h.service.GetLink(r.Context(), slug)
 
 	if err != nil {
 		// handle error
@@ -112,7 +125,7 @@ func (h *LinkHandler) UpdateLink(w http.ResponseWriter, r *http.Request) {
 
 	// update service
 
-	link, err := h.service.UpdateLink(slug, &req)
+	link, err := h.service.UpdateLink(r.Context(), slug, &req)
 	if err != nil {
 		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
@@ -129,7 +142,7 @@ func (h *LinkHandler) DeleteLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.DeleteLink(slug)
+	err := h.service.DeleteLink(r.Context(), slug)
 	if err != nil {
 		errors.WriteErrorResponse(w, err, getRequestID(r))
 		return
@@ -146,6 +159,5 @@ func (h *LinkHandler) sendJSON(w http.ResponseWriter, data interface{}, statusCo
 }
 
 func getRequestID(r *http.Request) string {
-	return "123123"
-	//return r.Header.Get("X-Request-ID")
+	return r.Header.Get("X-Request-ID")
 }

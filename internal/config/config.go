@@ -22,6 +22,7 @@ type AppConfig struct {
 	BaseURL     string `envconfig:"APP_BASE_URL" default:"http://localhost:3000"`
 	Environment string `envconfig:"APP_ENV" default:"development"`
 	LogLevel    string `envconfig:"APP_LOG_LEVEL" default:"info"`
+	LogFormat   string `envconfig:"APP_LOG_FORMAT" default:"json"` // json or text
 }
 
 // DatabaseConfig holds database-related configuration

@@ -3,6 +3,8 @@ package linkservice
 import (
 	"time"
 
+	"context"
+
 	"github.com/mcandemir/bilinkat/internal/config"
 	errors "github.com/mcandemir/bilinkat/internal/errors"
 	logger "github.com/mcandemir/bilinkat/internal/logger"
@@ -24,35 +26,46 @@ func NewLinkService(cfg *config.Config, logger *logger.Logger) *LinkService {
 }
 
 // Shorten creates a shortened URL for the given long URL
-func (s *LinkService) Shorten(url string) (*linkmodel.Link, *errors.AppError) {
-	// Validate URL
+func (s *LinkService) Shorten(ctx context.Context, url string) (*linkmodel.Link, *errors.AppError) {
+	s.logger.Debug(ctx, "Starting URL shortening process", "url", url)
+
 	if err := linkvalidator.NewLinkValidator().ValidateURL(url); err != nil {
+		s.logger.Error(ctx, "URL validation failed",
+			"url", url,
+			"error_code", err.Code,
+			"error_message", err.Message,
+			"validation_details", err.Details)
 		return nil, err
 	}
 
-	// Generate unique slug
 	slug, err := s.generateUniqueSlug()
 	if err != nil {
+		s.logger.Error(ctx, "Failed to generate unique slug",
+			"error_code", err.Code,
+			"error_message", err.Message)
 		return nil, err
 	}
 
-	// Create link
 	link := &linkmodel.Link{
 		Slug:      slug,
 		Url:       url,
 		CreatedAt: time.Now(),
 	}
 
-	// TODO: Save to database via repository
-	// For now, just return the link
+	s.logger.Info(ctx, "URL shortened successfully",
+		"original_url", url,
+		"slug", slug)
 
 	return link, nil
 }
 
 // GetLink retrieves a link by its slug
-func (s *LinkService) GetLink(slug string) (*linkmodel.Link, *errors.AppError) {
+func (s *LinkService) GetLink(ctx context.Context, slug string) (*linkmodel.Link, *errors.AppError) {
+	s.logger.Debug(ctx, "Starting link retrieval process", "slug", slug)
+
 	err := linkvalidator.NewLinkValidator().ValidateSlug(slug)
 	if err != nil {
+		s.logger.Error(ctx, "Invalid slug", "slug", slug, "error_code", err.Code, "error_message", err.Message)
 		return nil, err
 	}
 
@@ -64,7 +77,9 @@ func (s *LinkService) GetLink(slug string) (*linkmodel.Link, *errors.AppError) {
 }
 
 // GetUserLinks retrieves all links for a user
-func (s *LinkService) GetUserLinks(userID int) ([]*linkmodel.Link, *errors.AppError) {
+func (s *LinkService) GetUserLinks(ctx context.Context, userID int) ([]*linkmodel.Link, *errors.AppError) {
+	s.logger.Debug(ctx, "Starting user links retrieval process", "user_id", userID)
+
 	// TODO: Get from database via repository
 	// For now, return empty list
 	links := []*linkmodel.Link{}
@@ -77,9 +92,11 @@ func (s *LinkService) GetUserLinks(userID int) ([]*linkmodel.Link, *errors.AppEr
 }
 
 // UpdateLink updates an existing link
-func (s *LinkService) UpdateLink(slug string, updateLinkModel *linkmodel.UpdateLinkRequest) (*linkmodel.Link, *errors.AppError) {
-	// validate request context
+func (s *LinkService) UpdateLink(ctx context.Context, slug string, updateLinkModel *linkmodel.UpdateLinkRequest) (*linkmodel.Link, *errors.AppError) {
+	s.logger.Debug(ctx, "Starting link update process", "slug", slug)
+
 	if err := linkvalidator.NewLinkValidator().ValidateURL(updateLinkModel.URL); err != nil {
+		s.logger.Error(ctx, "Invalid URL", "url", updateLinkModel.URL, "error_code", err.Code, "error_message", err.Message)
 		return nil, err
 	}
 
@@ -90,7 +107,9 @@ func (s *LinkService) UpdateLink(slug string, updateLinkModel *linkmodel.UpdateL
 }
 
 // DeleteLink deletes a link
-func (s *LinkService) DeleteLink(slug string) *errors.AppError {
+func (s *LinkService) DeleteLink(ctx context.Context, slug string) *errors.AppError {
+	s.logger.Debug(ctx, "Starting link deletion process", "slug", slug)
+
 	// TODO: Delete from database via repository
 	// For now, return success
 	return nil

@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	logger "github.com/mcandemir/bilinkat/internal/logger"
+	utils "github.com/mcandemir/bilinkat/internal/utils"
 )
 
 func Logger(logger *logger.Logger) func(http.Handler) http.Handler {
@@ -48,15 +50,15 @@ func Recoverer(logger *logger.Logger) func(http.Handler) http.Handler {
 
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Simple request ID for now
-		w.Header().Set("X-Request-ID", "req-123")
-		next.ServeHTTP(w, r)
+		requestId := utils.GenerateRequestID()
+		w.Header().Set("X-Request-ID", requestId)
+		ctx := context.WithValue(r.Context(), "request_id", requestId)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func RealIP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// For now, just pass through
 		next.ServeHTTP(w, r)
 	})
 }
