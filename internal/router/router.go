@@ -37,7 +37,6 @@ func NewRouter(handlers *Handlers, logger *logger.Logger, config *config.Config)
 }
 
 func (r *Router) setupMiddleware() {
-	// Global middleware
 	r.Use(middleware.Logger(r.logger))
 	r.Use(middleware.Recoverer(r.logger))
 	r.Use(middleware.RequestID)
@@ -46,17 +45,14 @@ func (r *Router) setupMiddleware() {
 }
 
 func (r *Router) setupRoutes() {
-	// Ping-pong endpoint
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"message":"pong"}`))
 	})
 
-	// Health check
 	r.Get("/health", r.healthCheck)
 
-	// API routes
 	r.Route("/api/v1", func(v1 chi.Router) {
 		r.setupLinkRoutes(v1)
 	})
