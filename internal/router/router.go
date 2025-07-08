@@ -46,6 +46,13 @@ func (r *Router) setupMiddleware() {
 }
 
 func (r *Router) setupRoutes() {
+	// Ping-pong endpoint
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"pong"}`))
+	})
+
 	// Health check
 	r.Get("/health", r.healthCheck)
 
