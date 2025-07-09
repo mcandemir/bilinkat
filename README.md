@@ -1,6 +1,7 @@
 # Bİ LİNK AT!
 
 A URL shortening service built with Go, following clean architecture principles.
+(This project is currently ongoing, using AI supported README and CHANGELOGS to summerize current project status.)
 
 ## Features
 
