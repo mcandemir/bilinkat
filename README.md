@@ -1,4 +1,4 @@
-# Bİ LİNK AT!
+# Bİ LİNK AT! [Release Date: August-September 2025]
 
 A URL shortening service built with Go, following clean architecture principles.
 
